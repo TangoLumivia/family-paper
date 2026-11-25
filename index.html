@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家庭日報產生器</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#eef2f5;--panel:#fff;--ink:#17232d;--mute:#5d6b76;--line:#d5dde3;--acc:#0b6e6e;--acc-ink:#fff;--field:#f6f8fa;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181e;--panel:#18232b;--ink:#e8eef2;--mute:#9aa9b4;--line:#2b3a45;--acc:#4fc3bd;--acc-ink:#062423;--field:#1f2d37}}
+:root[data-theme="dark"]{--bg:#10181e;--panel:#18232b;--ink:#e8eef2;--mute:#9aa9b4;--line:#2b3a45;--acc:#4fc3bd;--acc-ink:#062423;--field:#1f2d37}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang HK","Microsoft JhengHei",sans-serif;line-height:1.6}
+.top{padding:22px 20px 6px;max-width:1240px;margin:0 auto}
+.top h1{font:900 1.7rem/1.2 "Noto Serif TC","Songti TC",serif;margin:0 0 4px}
+.top p{margin:0;color:var(--mute);font-size:.95rem}
+.wrap{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:20px;max-width:1240px;margin:0 auto;padding:14px 20px 40px;align-items:start}
+@media(max-width:860px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.panel h2{font-size:1rem;margin:18px 0 8px}
+.panel h2:first-child{margin-top:0}
+label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 3px}
+input[type=text],input[type=date],textarea{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus,button:focus-visible,.tpl:focus-within{outline:2px solid var(--acc);outline-offset:1px}
+.tpls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tpl{position:relative;border:2px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;background:var(--field);font-size:.85rem}
+.tpl input{position:absolute;opacity:0}
+.tpl.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.sw{height:38px;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.95rem}
+.sw.classic{background:#f3f0e8;color:#111;border:1px solid #111;font-family:"Noto Serif TC",serif}
+.sw.kids{background:#ffd23f;color:#d7263d;border:3px solid #1b1b3a;border-radius:14px}
+.sw.modern{background:#fff;color:#111;border-bottom:4px solid #ff4d2e;border-radius:0}
+.sw.vintage{background:#e7d3a8;color:#5a3a1a;border:3px double #5a3a1a;font-family:"Noto Serif TC",serif}
+.tpl b{display:block}.tpl span{color:var(--mute);font-size:.78rem}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.checks label{display:flex;gap:6px;align-items:center;margin:4px 0;color:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+button{font:inherit;font-size:.92rem;border-radius:9px;padding:9px 14px;border:1px solid var(--line);background:var(--field);color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
+.note{font-size:.78rem;color:var(--mute);margin-top:12px}
+.stage{overflow-x:auto}
+/* PAPER */
+.paper{--p:#fff;--t:#111;--a:#b00;--r:#111;width:100%;max-width:794px;min-height:1000px;margin:0 auto;padding:30px 34px;background:var(--p);color:var(--t);box-shadow:0 6px 24px rgba(0,0,0,.18);font-family:"Noto Serif TC","Songti TC",serif;line-height:1.55}
+.paper h3,.paper h4,.paper p,.paper ul{margin:0}
+.mast{text-align:center;border-bottom:3px double var(--r);padding-bottom:10px}
+.mast .name{font-size:3rem;font-weight:900;line-height:1.15;letter-spacing:.08em}
+.dateline{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.82rem;border-bottom:1px solid var(--r);padding:5px 0;margin-bottom:14px}
+.head{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--r)}
+.head h3{font-size:2.1rem;font-weight:900;line-height:1.25;margin-bottom:6px}
+.head p{white-space:pre-wrap;columns:2;column-gap:20px;text-align:justify;font-size:.95rem}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px}
+.box h4{font-size:1.05rem;font-weight:900;border-bottom:2px solid var(--r);margin-bottom:6px;padding-bottom:2px}
+.box ul{list-style:none;padding:0;font-size:.92rem}
+.box li{padding:3px 0;border-bottom:1px dotted #9a9a9a}
+.box li i{font-style:normal;font-weight:700;color:var(--a);margin-right:6px}
+.box p{font-size:.92rem;white-space:pre-wrap}
+.box.wide{grid-column:1/-1}
+.quote p{font-size:1.25rem;font-weight:700;text-align:center;line-height:1.5}
+.foot{margin-top:16px;border-top:3px double var(--r);padding-top:6px;text-align:center;font-size:.75rem}
+.empty{color:#888;font-size:.9rem}
+.head .tag{display:inline-block;font:700 .8rem "Noto Sans TC",sans-serif;border:1px solid var(--r);padding:1px 12px;border-radius:99px;margin-bottom:8px}
+.head h3{font-size:2.5rem}
+.head p{font-size:1.1rem;line-height:1.95}
+.head p::first-letter{font-size:2.6em;font-weight:900;float:left;line-height:1;margin:.04em .1em 0 0;color:var(--a)}
+.think{margin-top:12px;padding:8px 12px;border:2px dashed var(--a);border-radius:8px;font-size:.95rem}
+.think b{display:block;color:var(--a)}
+.box.joke p,.box.iq p{font-size:1.02rem}
+.box p.punch{margin-top:8px;font-weight:900;color:var(--a);font-size:1.15rem}
+.box p.mine{margin-top:10px;border-top:1px dashed var(--r);padding-top:6px}
+.box p.hint{font-size:.74rem;color:#777;margin-top:6px}
+.box p.ans{transform:rotate(180deg);text-align:right;font-size:.85rem;margin-top:2px}
+.corner{margin-top:16px;border-top:2px solid var(--r);padding-top:6px}
+.ct{font-size:.9rem;margin-bottom:6px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px}
+.corner .box h4{font-size:.85rem}
+.corner .box ul,.corner .box p{font-size:.8rem}
+.corner .quote p{font-size:1rem}
+.rm li{padding-left:1.3em;position:relative}
+.cid{font-weight:400;font-size:.7rem;opacity:.6;letter-spacing:0}
+.rm li::before{content:"";position:absolute;left:0;top:.5em;width:.75em;height:.75em;border:1.5px solid var(--r);border-radius:2px}
+select{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+select:focus{outline:2px solid var(--acc);outline-offset:1px}
+.chip{margin:0 6px 6px 0;padding:4px 12px;border-radius:99px;font-size:.85rem}
+.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
+.paper[data-age=a] .head p{columns:1;font-size:1.45rem;line-height:2.1}
+.paper[data-age=a] .head h3{font-size:2.8rem}
+.paper[data-age=c] .head p,.paper[data-age=d] .head p{font-size:1.02rem;line-height:1.85}
+.paper[data-age=d] .head p::first-letter{float:none;font-size:inherit;margin:0;color:inherit}
+.kids .tag{background:#fff}.kids .think{background:#fff;border-color:#d7263d}
+.modern .tag{background:#ff4d2e;color:#fff;border-color:#ff4d2e}
+@media(max-width:640px){.cgrid{grid-template-columns:1fr}.head h3{font-size:1.7rem}}
+/* kids */
+.paper.kids{--p:#fff7d6;--t:#1b1b3a;--a:#d7263d;--r:#1b1b3a;font-family:"Noto Sans TC",sans-serif;border:6px solid #1b1b3a;border-radius:26px}
+.kids .mast{border:0;background:#ff6b9d;color:#fff;border-radius:20px;padding:10px;transform:rotate(-1deg)}
+.kids .mast .name{font-weight:900;letter-spacing:.04em;text-shadow:3px 3px 0 #1b1b3a}
+.kids .dateline{border:0;justify-content:center;font-weight:700;margin-top:10px}
+.kids .head{background:#4cc9f0;border:4px solid #1b1b3a;border-radius:18px;padding:14px}
+.kids .head p{columns:1}
+.kids .box{border:3px solid #1b1b3a;border-radius:18px;padding:10px 12px;background:#fff}
+.kids .box:nth-child(3n+1){background:#caffbf}.kids .box:nth-child(3n+2){background:#ffd6a5}.kids .box:nth-child(3n){background:#e0c3fc}
+.kids .box h4{border:0;font-size:1.15rem}
+.kids .box li{border-bottom:2px dashed #1b1b3a55}
+.kids .foot{border:0}
+/* modern */
+.paper.modern{--p:#fff;--t:#121212;--a:#ff4d2e;--r:#121212;font-family:"Noto Sans TC",sans-serif}
+.modern .mast{text-align:left;border:0;border-bottom:8px solid #ff4d2e}
+.modern .mast .name{font-size:3.4rem;letter-spacing:-.01em;line-height:1.1}
+.modern .dateline{border:0;color:#555;padding:8px 0}
+.modern .head{border:0;background:#f4f4f2;padding:18px}
+.modern .head h3{font-size:2.4rem}
+.modern .head p{columns:1;max-width:60ch}
+.modern .box h4{border:0;color:#ff4d2e;font-size:.95rem;border-left:5px solid #ff4d2e;padding-left:8px}
+.modern .box li{border-bottom:1px solid #e3e3e0}
+.modern .foot{border:0;color:#777}
+/* vintage */
+.paper.vintage{--p:#ecdcb3;--t:#3b2813;--a:#8c2f1b;--r:#3b2813;border:8px double #3b2813;background-image:radial-gradient(rgba(90,58,26,.12) 1px,transparent 1.5px);background-size:7px 7px}
+.vintage .mast .name{font-size:3.2rem;letter-spacing:.14em;text-shadow:1px 1px 0 #c9b27c}
+.vintage .head h3{font-style:normal;text-align:center}
+.vintage .box{border:1px solid #3b2813;padding:8px 10px}
+.vintage .box h4{text-align:center;border-bottom:1px solid #3b2813;font-size:1rem;letter-spacing:.2em}
+@media(max-width:640px){.paper{padding:18px 16px;min-height:0}.mast .name{font-size:2.1rem!important}.head h3{font-size:1.5rem!important}.head p{columns:1}.grid{grid-template-columns:1fr}}
+@media print{
+@page{size:A4;margin:8mm}
+body{background:#fff}
+.top,.panel{display:none!important}
+.wrap{display:block;padding:0;max-width:none}
+.stage{overflow:visible}
+.paper{box-shadow:none;max-width:none;width:100%;min-height:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+:root{padding:0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+<button type="button" id="ui" style="float:right" aria-label="Language / 語言"></button>
+<h1>家庭日報產生器</h1>
+<p>每日一個故事、一個笑話、一條 IQ 題，印成一份孩子自己想睇嘅報紙。唔使安裝，唔使連接 Calendar，行程只係細細格。</p>
+</header>
+<main class="wrap">
+<section class="panel" aria-label="編輯內容">
+<h2>先揀：孩子同興趣</h2>
+<label for="kid">孩子稱呼（選填）</label>
+<input type="text" id="kid" data-k="kid" placeholder="例如：小明">
+<label for="age">年齡組別</label>
+<select id="age" data-k="age"><option value="a">4–6 歲　簡單故事、圖片猜謎</option><option value="b">7–10 歲　故事、笑話、謎題</option><option value="c">11–14 歲　邏輯、科學趣聞、短篇</option><option value="d">15 歲或以上　Brain Teasers、趣味知識</option></select>
+<label for="lvl">閱讀能力（字數只係起點，可按孩子調整）</label>
+<select id="lvl" data-k="lvl"><option value="0.7">稍淺（字數少約三成）</option><option value="1">標準</option><option value="1.3">稍深（字數多約三成）</option></select>
+<label for="lang">中文風格</label>
+<select id="lang" data-k="lang"><option value="en">English</option><option value="yue">廣東話口語</option><option value="zh">書面中文</option><option value="bi">English + 中文</option></select>
+<label>有興趣嘅主題（可多選，唔揀就隨機）</label>
+<div class="chips" id="chips"></div>
+<button class="pri" type="button" id="gen" style="margin-top:12px;width:100%">生成今日內容</button>
+<p class="note" id="stat"></p>
+
+<h2>1. 揀設計</h2>
+<div class="tpls" id="tpls"></div>
+
+<h2>2. 基本資料</h2>
+<label for="fam">家姓或家庭名稱</label>
+<input type="text" id="fam" data-k="fam" placeholder="例如：陳">
+<label for="title">報紙名稱（留空會自動用「家姓＋家日報」）</label>
+<input type="text" id="title" data-k="title" placeholder="例如：陳家日報">
+<label for="date">日期</label>
+<input type="date" id="date" data-k="date">
+<label for="weather">天氣／心情</label>
+<input type="text" id="weather" data-k="weather" placeholder="例如：晴天 26°C，記得帶遮">
+
+<h2>3. 今日小故事（報紙最大版面）</h2>
+<button type="button" data-pick="story" style="font-size:.82rem;padding:5px 10px">換個故事</button>
+<label for="hl">故事標題</label>
+<input type="text" id="hl" data-k="hl">
+<label for="story">故事內容（建議 150 至 400 字，分段請空一行）</label>
+<textarea id="story" data-k="story" style="min-height:160px"></textarea>
+<label for="think">讀後想一想（一條問題，等孩子開口講）</label>
+<input type="text" id="think" data-k="think">
+
+<h2>4. 笑話同 IQ 題</h2>
+<button type="button" data-pick="joke" style="font-size:.82rem;padding:5px 10px">換個笑話</button>
+<button type="button" data-pick="iq" style="font-size:.82rem;padding:5px 10px">換條 IQ 題</button>
+<label for="joke">笑話（問題或開頭）</label>
+<input type="text" id="joke" data-k="joke">
+<label for="punch">爆笑答案</label>
+<input type="text" id="punch" data-k="punch">
+<label for="iq">IQ 題</label>
+<textarea id="iq" data-k="iq"></textarea>
+<label for="ans">IQ 答案（會倒轉印喺報紙上，孩子要轉頭睇）</label>
+<input type="text" id="ans" data-k="ans">
+
+<h2>5. 屋企小站（每行一項，只佔細細格）</h2>
+<label for="remind">給孩子嘅今日小叮嚀（每行一項）</label>
+<textarea id="remind" data-k="remind"></textarea>
+<label for="sched">今日行程（可寫「時間 事項」）</label>
+<textarea id="sched" data-k="sched"></textarea>
+<label for="chores">家務分工（可寫「名字：事項」）</label>
+<textarea id="chores" data-k="chores"></textarea>
+<label for="dinner">今晚食乜</label>
+<input type="text" id="dinner" data-k="dinner">
+<label for="bday">生日／紀念日／提醒</label>
+<input type="text" id="bday" data-k="bday">
+<label for="chal">家庭小挑戰</label>
+<input type="text" id="chal" data-k="chal">
+<label for="quote">今日金句</label>
+<input type="text" id="quote" data-k="quote">
+
+<h2>6. 顯示邊啲欄目</h2>
+<div class="checks" id="checks"></div>
+
+<div class="btns">
+<button class="pri" id="print">列印／儲存 PDF</button>
+<button id="sample">重新填範例</button>
+<button id="clear">清空</button>
+</div>
+<p class="note">列印時請揀「儲存為 PDF」或你部打印機。內容只存喺你自己部瀏覽器，唔會上傳。</p>
+</section>
+<section class="stage" aria-label="報紙預覽"><article class="paper classic" id="paper"></article></section>
+</main>
+<script>
+(function(){
+var TPL=[
+{id:'classic',n:'經典報紙',d:'黑白大報，嚴肅得嚟好得意'},
+{id:'kids',n:'小朋友版',d:'鮮豔色彩，啱小朋友睇'},
+{id:'modern',n:'簡約現代',d:'留白乾淨，一點橙紅'},
+{id:'vintage',n:'懷舊舊報',d:'泛黃紙張，老香港味'}];
+var SEC=[['story','今日小故事'],['joke','笑話'],['iq','IQ 題'],['remind','今日小叮嚀'],['sched','今日行程'],['chores','家務分工'],['dinner','今晚餐單'],['bday','生日提醒'],['chal','家庭小挑戰'],['quote','今日金句']];
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+var SAMPLE={tpl:'classic',age:'b',topics:[],lvl:'1',lang:'yue',kid:'',fam:'陳',title:'',date:today(),weather:'天晴，約 26°C，出門記得塗防曬',
+hl:'會唱歌嘅小雲朵',
+story:'有一朵小雲朵，叫阿綿。其他雲朵都識落雨，只有阿綿唔識，佢覺得好慚愧。\n\n有日，山下嘅花兒全部低下頭，原來好耐冇落雨，花兒好口渴。阿綿落唔到雨，但佢識唱歌。佢大聲唱起歌嚟，歌聲傳到好遠，其他雲朵聽到，都飄過嚟一齊合唱。\n\n雲朵越聚越多，天色慢慢變暗，嘩啦嘩啦，雨水終於落喺花兒身上。阿綿笑咗：原來唔識落雨都緊要，因為我識得叫朋友一齊幫手。',
+think:'如果你係阿綿，你會點樣叫朋友幫手？',
+joke:'乜嘢床唔可以瞓？',punch:'河床！瞓落去會濕曬！',
+iq:'找規律：1、2、4、7、11，下一個數字係乜？',ans:'16（每次加多 1、2、3、4、5）',
+sched:'7:30 早餐，準備出門\n8:15 小朋友返學\n15:30 接放學\n18:30 全家晚飯\n20:00 家庭桌遊時間',
+chores:'爸爸：煮晚飯\n媽媽：洗衫、摺衫\n大仔：倒垃圾\n細妹：收拾玩具',
+dinner:'蒜蓉蒸蝦、炒菜心、冬瓜湯',remind:'多飲水，記得帶水壺返學\n下晝 3 點有師傅上嚟整洗衣機，放學直接返屋企\n食零食之前要洗手',bday:'後日係婆婆生日，記得打電話',chal:'今晚飯桌上，每人講一件今日最開心嘅事',
+quote:'一家人齊齊整整，就係最好嘅一餐。',
+on:{sched:1,chores:1,dinner:1,bday:1,chal:1,quote:1}};
+var L='en';try{L=localStorage.getItem('fnp-ui')||((navigator.language||'').indexOf('zh')===0?'zh':'en')}catch(e){}
+var SEN={lang:'en',fam:'Chan',weather:'Sunny, about 26°C',hl:'The Little Cloud Who Could Sing',story:'There was once a little cloud named Mimi. All the other clouds could make rain, but Mimi could not, and she felt very small.\n\nOne day the flowers on the hill hung their heads. It had not rained for weeks, and they were thirsty. Mimi could not make rain, but she could sing. She sang as loudly as she could, and her song floated far across the sky.\n\nOther clouds heard it and drifted over to join in. Soon the sky was full of singing clouds, the air turned cool, and the rain finally fell on the flowers. Mimi smiled. Not being able to do everything was fine, because she knew how to call her friends for help.',think:'If you were Mimi, how would you ask your friends for help?',joke:'What kind of bed can you never sleep in?',punch:'A river bed!',iq:'What number comes next? 1, 2, 4, 7, 11, …',ans:'16 (the gap grows by 1 each time: +1, +2, +3, +4, +5)',sched:'7:30 Breakfast\n8:15 School drop-off\n15:30 Pick-up\n18:30 Family dinner\n20:00 Board-game night',chores:'Dad: cook dinner\nMom: laundry\nAlex: take out the trash\nMia: tidy toys',dinner:'Steamed shrimp, stir-fried greens, winter melon soup',remind:'Drink plenty of water and bring your water bottle\nA repairman is coming at 3 pm to fix the washing machine, so come straight home\nWash your hands before snacks',bday:'Grandma’s birthday is the day after tomorrow. Call her!',chal:'At dinner, everyone shares the best part of their day.',quote:'The best meal is the one we share together.'};
+function sam(){var s=JSON.parse(JSON.stringify(SAMPLE));if(L==='en')for(var k in SEN)s[k]=SEN[k];return s}
+var S;
+try{var raw=localStorage.getItem('fnp-s-'+L);if(raw)S=JSON.parse(raw)}catch(e){}
+if(!S||typeof S!=='object'||!S.on)S=sam();
+S.date=S.date||today();S.age=S.age||'b';S.topics=S.topics||[];S.lvl=S.lvl||'1';S.lang=S.lang||(L==='en'?'en':'yue');S.kid=S.kid||'';
+function save(){try{localStorage.setItem('fnp-s-'+L,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function lines(s){return String(s||'').split('\n').map(function(x){return x.trim()}).filter(Boolean)}
+function li(s){var m=s.match(/^([^：:\s]{1,8}[：:]|\d{1,2}[:：]\d{2})\s*(.*)$/);if(m&&m[2])return'<li><i>'+esc(m[1].replace(/[：:]$/,''))+'</i>'+esc(m[2])+'</li>';var t=s.match(/^(\d{1,2}[:：]\d{2})\s+(.*)$/);return'<li>'+esc(s)+'</li>'}
+function fmtDate(v){var p=(v||'').split('-');if(p.length!==3)return'';var d=new Date(+p[0],+p[1]-1,+p[2]);return d.toLocaleDateString(S.lang==='en'?'en-CA':'zh-HK',{year:'numeric',month:'long',day:'numeric',weekday:'long'})}
+function render(){
+var p=document.getElementById('paper');
+var name=S.title&&S.title.trim()?S.title.trim():(S.fam&&S.fam.trim()?S.fam.trim()+(S.lang==='en'?' Family Daily':'家日報'):pt('我哋屋企日報'));
+var h='<header class="mast"><div class="name">'+esc(name)+'</div></header>';
+h+='<div class="dateline"><span>'+esc(fmtDate(S.date))+'</span><span>'+esc(S.weather)+'</span><span>'+(S.kid?esc(S.kid)+(S.lang==='en'?'’s Edition　':'專屬版　'):'')+pt('適合')+' '+agl()+'</span></div>';
+var on=function(k){return S.on[k]!==0},any=false;
+if(on('story')&&(S.hl||S.story)){any=true;var st=String(S.story||''),n=Math.max(1,Math.round((st.match(/[\u4e00-\u9fff]/g)||[]).length/180+(st.match(/[A-Za-z’']+/g)||[]).length/100));
+h+='<section class="head"><div class="tag">'+pt(STL[S.age]||'今日小故事')+'　'+rt(n)+(S.sid?'　'+S.sid:'')+'</div><h3>'+esc(S.hl)+'</h3><p>'+esc(S.story)+'</p>'+(S.think?'<div class="think"><b>'+pt('讀後想一想')+'</b>'+esc(S.think)+'</div>':'')+'</section>'}
+var r='';
+if(on('joke')&&S.joke)r+='<section class="box joke"><h4>'+pt(JL[S.age]||'今日笑話')+(S.jid?' <small class="cid">'+S.jid+'</small>':'')+'</h4><p>'+esc(S.joke)+'</p>'+(S.punch?'<p class="punch">'+esc(S.punch)+'</p>':'')+'</section>';
+if(on('iq')&&S.iq)r+='<section class="box iq"><h4>'+pt(IL[S.age]||'IQ 挑戰')+(S.qid?' <small class="cid">'+S.qid+'</small>':'')+'</h4><p>'+esc(S.iq)+'</p><p class="mine">'+pt('我嘅答案：')+'＿＿＿＿＿＿</p>'+(S.ans?'<p class="hint">'+pt('答案喺下面，倒轉嚟睇')+'</p><p class="ans">'+pt('答案：')+esc(S.ans)+'</p>':'')+'</section>';
+if(r){any=true;h+='<div class="grid">'+r+'</div>'}
+var cg='';
+SEC.slice(3).forEach(function(x){var k=x[0];if(!on(k)||!S[k]||!String(S[k]).trim())return;
+var body=k==='remind'?'<ul class="rm">'+lines(S[k]).map(function(s){return'<li>'+esc(s)+'</li>'}).join('')+'</ul>':(k==='sched'||k==='chores')?'<ul>'+lines(S[k]).map(li).join('')+'</ul>':k==='quote'?'<p>“'+esc(S[k])+'”</p>':'<p>'+esc(S[k])+'</p>';
+cg+='<section class="box'+(k==='quote'?' wide quote':'')+'"><h4>'+pt(x[1])+'</h4>'+body+'</section>'});
+if(cg){any=true;h+='<div class="corner"><h4 class="ct">'+pt('屋企小站')+'</h4><div class="cgrid">'+cg+'</div></div>'}
+if(!any)h+='<p class="empty">'+ui('喺左邊填啲內容，報紙就會出現喺度。')+'</p>';
+h+='<footer class="foot">'+esc(name)+'　·　'+pt('專屬我哋一家嘅每日新聞')+'</footer>';
+p.className='paper '+S.tpl;p.setAttribute('data-age',S.age||'b');p.innerHTML=h;
+document.title=name;
+}
+function build(){
+var t=document.getElementById('tpls');
+t.innerHTML=TPL.map(function(x){return'<label class="tpl" data-id="'+x.id+'"><input type="radio" name="tpl" value="'+x.id+'"><div class="sw '+x.id+'">'+x.n+'</div><b>'+x.n+'</b><span>'+x.d+'</span></label>'}).join('');
+t.addEventListener('change',function(e){S.tpl=e.target.value;sync();save();render()});
+var c=document.getElementById('checks');
+c.innerHTML=SEC.map(function(x){return'<label><input type="checkbox" data-s="'+x[0]+'"> '+x[1]+'</label>'}).join('');
+c.addEventListener('change',function(e){S.on[e.target.dataset.s]=e.target.checked?1:0;save();render()});
+document.querySelectorAll('[data-k]').forEach(function(el){el.addEventListener('input',function(){S[el.dataset.k]=el.value;save();render()})});
+}
+function sync(){
+document.querySelectorAll('[data-k]').forEach(function(el){el.value=S[el.dataset.k]||''});
+document.querySelectorAll('.tpl').forEach(function(l){var on=l.dataset.id===S.tpl;l.classList.toggle('on',on);l.querySelector('input').checked=on});
+document.querySelectorAll('[data-s]').forEach(function(el){el.checked=S.on[el.dataset.s]!==0});
+}
+document.getElementById('print').onclick=function(){window.print()};
+document.getElementById('sample').onclick=function(){var t=S.tpl;S=sam();S.tpl=t;sync();save();render()};
+document.getElementById('clear').onclick=function(){var t=S.tpl;S={tpl:t,age:S.age,topics:S.topics,lvl:S.lvl,lang:S.lang,kid:S.kid,fam:'',title:'',date:today(),weather:'',hl:'',story:'',sched:'',chores:'',dinner:'',bday:'',chal:'',quote:'',remind:'',think:'',joke:'',punch:'',iq:'',ans:'',on:{sched:1,chores:1,dinner:1,bday:1,chal:1,quote:1}};sync();save();render()};
+var LIB={story:[['細小嘅螢火蟲','有隻螢火蟲嫌自己嘅光太細，好似星星咁遙遠。\n\n夜晚，一隻小蝸牛迷咗路，就係靠呢點細細嘅光，一步一步行返屋企。螢火蟲先明白：光細冇所謂，照到人就夠。','你試過幫人做過一件細事嗎？'],['愛打噴嚏嘅小龍','小龍一打噴嚏就噴火，朋友都怕咗佢。\n\n有晚山洞好凍，大家冇火取暖，小龍用力打咗三個噴嚏，暖烘烘嘅火光照亮成個山洞。原來你嘅缺點，有時就係你嘅本領。','你覺得自己有咩「怪怪地」但其實好叻嘅地方？'],['數星星嘅貓','小貓每晚數星星，數到一百就瞓著。\n\n有晚佢數到一百零一，發現多咗一粒，原來係隻飛過嘅螢火蟲。小貓笑住話：世界有時會畀你一個驚喜。','今晚你想數啲咩嘢？']],
+joke:[['點解老師帶太陽眼鏡返課室？','因為學生嘅前途好光明！'],['乜嘢門永遠打唔開？','球門！'],['小明話：「我跑步好快。」媽媽問：「有幾快？」','小明：「連功課都追唔上我！」']],
+iq:[['找規律：2、4、8、16，下一個數字係乜？','32（每次乘 2）'],['小美有 3 個姐姐，每個姐姐都有 1 個弟弟，一共有幾多個孩子？','4 個（3 個姐姐加同一個弟弟）'],['爸爸 40 歲，係仔仔年齡嘅 4 倍。幾年後爸爸係仔仔嘅 3 倍？','5 年後（仔仔 15 歲，爸爸 45 歲）']]};
+document.querySelectorAll('[data-pick]').forEach(function(b){b.onclick=function(){var t=b.dataset.pick,a=LIB[t],c=a[Math.floor(Math.random()*a.length)];if(t==='story'){S.hl=c[0];S.story=c[1];S.think=c[2]}else if(t==='joke'){S.joke=c[0];S.punch=c[1]}else{S.iq=c[0];S.ans=c[1]}sync();save();render()}});
+build();
+var AGES={a:{n:'4–6 歲',r:[30,60],g:'故事簡單、句子短、有重複節奏；IQ 題做成「圖片猜謎」，用 emoji（例如數一數有幾多個🍎、估動物）；笑話要簡單直接'},b:{n:'7–10 歲',r:[80,150],g:'趣味故事；笑話；IQ 題係找規律或簡單邏輯謎題'},c:{n:'11–14 歲',r:[120,200],g:'短篇故事可有轉折；「笑話」欄改為一則令人驚訝嘅科學趣聞（joke 放問題，punch 放答案同解釋）；IQ 題係邏輯問題'},d:{n:'15 歲或以上',r:[150,250],g:'短文可以係故事或趣味知識；「笑話」欄改為一則趣味知識（joke 放問題，punch 放答案）；IQ 題係 Brain Teaser 或批判思考題（例如搵出論證漏洞）'}};
+var TOP=['動物','太空科學','奇幻冒險','恐龍','運動','美食','大自然','家庭生活','科技','友誼'];
+var JL={a:'今日笑話',b:'今日笑話',c:'科學趣聞',d:'趣味知識'},IL={a:'圖片猜謎',b:'謎題挑戰',c:'邏輯挑戰',d:'Brain Teaser'},STL={a:'今日小故事',b:'今日小故事',c:'今日短篇',d:'今日閱讀'};
+function seen(){try{return JSON.parse(localStorage.getItem('fnp-seen2'))||{}}catch(e){return{}}}
+function mark(t,v){if(!v)return;try{var d=seen();d[t]=(d[t]||[]).concat([String(v).slice(0,40)]).slice(-60);localStorage.setItem('fnp-seen2',JSON.stringify(d))}catch(e){}}
+function chips(){var c=document.getElementById('chips');c.innerHTML=TOP.map(function(x){var o=S.topics.indexOf(x)>-1;return'<button type="button" class="chip'+(o?' on':'')+'" aria-pressed="'+o+'" data-t="'+x+'">'+ui(x)+'</button>'}).join('');Array.prototype.forEach.call(c.children,function(b){b.onclick=function(){var i=S.topics.indexOf(b.dataset.t);if(i>-1)S.topics.splice(i,1);else S.topics.push(b.dataset.t);save();chips()}})}
+function status(m){document.getElementById('stat').textContent=m}
+function fb(t){var B=L==='en'?LIBE:LIB,pick=function(a,i){var s=(seen()[i]||[]),u=a.filter(function(x){return s.indexOf(String(x[0]).slice(0,40))<0});u=u.length?u:a;return u[Math.floor(Math.random()*u.length)]},c;
+if(t==='all'||t==='story'){c=pick(B.story,'story');S.hl=c[0];S.story=c[1];S.think=c[2];mark('story',c[0])}
+if(t==='all'||t==='joke'){c=pick(B.joke,'joke');S.joke=c[0];S.punch=c[1];mark('joke',c[0])}
+if(t==='all'||t==='iq'){c=pick(B.iq,'iq');S.iq=c[0];S.ans=c[1];mark('iq',c[0])}}
+var busy=false;
+async function gen(t){if(busy)return;busy=true;var gb=document.getElementById('gen');gb.disabled=true;status(ui('生成緊，請等一等⋯⋯'));
+var a=AGES[S.age||'b'],k=+S.lvl||1,lo=Math.round(a.r[0]*k),hi=Math.round(a.r[1]*k),sn=seen();
+var F={all:'hl, story, think, joke, punch, iq, ans',story:'hl, story, think',joke:'joke, punch',iq:'iq, ans'}[t];
+var avoid=[].concat(sn.story||[],sn.joke||[],sn.iq||[]).join('；');
+var prompt='你係兒童報紙編輯，為 '+a.n+' 嘅孩子'+(S.kid?'（'+S.kid+'）':'')+'寫今日內容。\n主題：'+(S.topics.length?'由「'+S.topics.join('、')+'」之中揀，每項內容可以用唔同主題':'任選，要有變化')+'。\n文字：'+({en:'English only, no Chinese characters at all',zh:'繁體書面中文，唔好夾雜英文句子',yue:'繁體中文，廣東話口語，唔好夾雜英文句子',bi:'雙語（每個欄位先寫英文，再換行寫對應嘅繁體中文翻譯，中英合計字數控制喺下面範圍內）'}[S.lang]||'繁體中文')+'。\n故事長度：'+lo+' 至 '+hi+(S.lang==='en'?' words':S.lang==='bi'?' 個字詞':' 個中文字')+'，段落用 \\n\\n 分隔。\n年齡重點：'+a.g+'。\n內容要正面、安全、冇驚嚇或成人元素，要有新意。\n以下係最近用過嘅內容，唔好重複或太相似：'+(avoid||'（冇）')+'\n只輸出一個 JSON 物件，欄位：'+F+'。think 係一條開放式問題，ans 要連簡短解釋。每個欄位都係字串。';
+try{var sm=USE_AI&&typeof claude!=='undefined'?await claude.use('sample'):null;if(!sm)throw 0;
+var r=await sm(prompt,{cache:false}),o=JSON.parse(r.text.match(/\{[\s\S]*\}/)[0]);
+F.split(', ').forEach(function(f){if(typeof o[f]==='string')S[f]=o[f].replace(/\\n/g,'\n')});
+if(t==='all'||t==='story')mark('story',S.hl);if(t==='all'||t==='joke')mark('joke',S.joke);if(t==='all'||t==='iq')mark('iq',S.iq);
+var s2=seen(),q=[(s2.story||[]).length,(s2.joke||[]).length,(s2.iq||[]).length];status(L==='en'?'Generated for ages '+AE[S.age||'b']+'. Logged '+q[0]+' stories, '+q[1]+' jokes and '+q[2]+' puzzles to avoid repeats.':'已按 '+a.n+' 生成。已記錄 '+q[0]+' 篇故事、'+q[1]+' 個笑話、'+q[2]+' 條題目，之後唔會重複。')}
+catch(e){fb2(t);status(!USE_AI?FBM:ui('暫時用唔到 AI 生成（可能未授權或網絡問題），已改用備用內容（未按年齡分級）。'))}
+sync();save();render();busy=false;gb.disabled=false}
+document.getElementById('gen').onclick=function(){gen('all')};
+document.querySelectorAll('[data-pick]').forEach(function(b){b.onclick=function(){gen(b.dataset.pick)}});
+document.getElementById('age').addEventListener('change',function(){setTimeout(function(){status(L==='en'?'Switched to ages '+AE[S.age]+'. Press “Generate today’s content” to refresh.':'已轉做 '+AGES[S.age].n+'。撳「生成今日內容」更新內容。')},0)});
+var AE={a:'4–6',b:'7–10',c:'11–14',d:'15+'};
+function agl(){var a=S.age||'b',e='Ages '+AE[a];return S.lang==='en'?e:S.lang==='bi'?AGES[a].n+' / '+e:AGES[a].n}
+function rt(n){var z='約 '+n+' 分鐘讀完',e='about '+n+' min read';return S.lang==='en'?e:S.lang==='bi'?z+' / '+e:z}
+var D={'家庭日報產生器':'Family Newspaper Maker','每日一個故事、一個笑話、一條 IQ 題，印成一份孩子自己想睇嘅報紙。唔使安裝，唔使連接 Calendar，行程只係細細格。':'A story, a joke and a brain teaser every day, printed as a newspaper your child actually wants to read. No app and no calendar connection; the schedule is just a small corner.','先揀：孩子同興趣':'Start here: your child and their interests','1. 揀設計':'1. Choose a design','2. 基本資料':'2. Basics','3. 今日小故事（報紙最大版面）':'3. Today’s story (the biggest space)','4. 笑話同 IQ 題':'4. Joke and brain teaser','5. 屋企小站（每行一項，只佔細細格）':'5. Family corner (one item per line, kept small)','6. 顯示邊啲欄目':'6. Sections to show','孩子稱呼（選填）':'Child’s name (optional)','年齡組別':'Age group','閱讀能力（字數只係起點，可按孩子調整）':'Reading level (word counts are a starting point; adjust to your child)','內容語言':'Content language','有興趣嘅主題（可多選，唔揀就隨機）':'Topics they enjoy (pick several, or none for random)','家姓或家庭名稱':'Family name','報紙名稱（留空會自動用「家姓＋家日報」）':'Newspaper name (leave blank to use “[Family] Family Daily”)','日期':'Date','天氣／心情':'Weather / mood','故事標題':'Story title','故事內容（建議 150 至 400 字，分段請空一行）':'Story (leave a blank line between paragraphs)','讀後想一想（一條問題，等孩子開口講）':'Think about it (one question to get them talking)','笑話（問題或開頭）':'Joke (setup)','爆笑答案':'Punchline','IQ 題':'Brain teaser','IQ 答案（會倒轉印喺報紙上，孩子要轉頭睇）':'Answer (printed upside down, so kids have to turn the page)','今日行程（可寫「時間 事項」）':'Today’s schedule (e.g. “7:30 Breakfast”)','家務分工（可寫「名字：事項」）':'Chores (e.g. “Name: task”)','今晚食乜':'What’s for dinner','生日／紀念日／提醒':'Birthdays / anniversaries / reminders','家庭小挑戰':'Family mini-challenge','今日金句':'Quote of the day','今日小故事':'Today’s story','笑話':'Joke','今日行程':'Today’s schedule','家務分工':'Chores','今晚餐單':'Dinner menu','生日提醒':'Birthday reminders','換個故事':'New story','換個笑話':'New joke','換條 IQ 題':'New brain teaser','生成今日內容':'Generate today’s content','列印／儲存 PDF':'Print / Save as PDF','重新填範例':'Reset sample','清空':'Clear','列印時請揀「儲存為 PDF」或你部打印機。內容只存喺你自己部瀏覽器，唔會上傳。':'When printing, choose “Save as PDF” or your printer. Your content stays in your own browser and is not uploaded.','4–6 歲　簡單故事、圖片猜謎':'4–6: simple stories, picture riddles','7–10 歲　故事、笑話、謎題':'7–10: stories, jokes, puzzles','11–14 歲　邏輯、科學趣聞、短篇':'11–14: logic, science facts, short reads','15 歲或以上　Brain Teasers、趣味知識':'15+: brain teasers, fun facts','稍淺（字數少約三成）':'Easier (about 30% fewer words)','標準':'Standard','稍深（字數多約三成）':'Harder (about 30% more words)','廣東話口語':'Chinese (Cantonese, spoken style)','書面中文':'Chinese (written)','經典報紙':'Classic Broadsheet','黑白大報，嚴肅得嚟好得意':'Black and white, seriously charming','小朋友版':'Kids Edition','鮮豔色彩，啱小朋友睇':'Bright colours for little readers','簡約現代':'Modern Minimal','留白乾淨，一點橙紅':'Clean white space, one orange accent','懷舊舊報':'Vintage Gazette','泛黃紙張，老香港味':'Yellowed paper, old-time feel','例如：小明':'e.g. Alex','例如：陳':'e.g. Chan','例如：陳家日報':'e.g. The Chan Family Daily','例如：晴天 26°C，記得帶遮':'e.g. Sunny, 26°C','生成緊，請等一等⋯⋯':'Generating, one moment…','暫時用唔到 AI 生成（可能未授權或網絡問題），已改用備用內容（未按年齡分級）。':'AI generation is unavailable (permission or network issue). Built-in backup content was used and is not age-graded.','動物':'Animals','太空科學':'Space & Science','奇幻冒險':'Fantasy & Adventure','恐龍':'Dinosaurs','運動':'Sports','美食':'Food','大自然':'Nature','家庭生活':'Family Life','科技':'Tech','友誼':'Friendship','今日小叮嚀':'Little Reminders','給孩子嘅今日小叮嚀（每行一項）':'Little reminders for the kids (one per line)','今日笑話':'Joke of the Day','科學趣聞':'Science Fact','趣味知識':'Fun Fact','圖片猜謎':'Picture Riddle','謎題挑戰':'Puzzle Challenge','邏輯挑戰':'Logic Challenge','今日短篇':'Today’s Short Read','今日閱讀':'Today’s Reading','屋企小站':'Family Corner','讀後想一想':'Think About It','我嘅答案：':'My answer: ','答案喺下面，倒轉嚟睇':'Answer below. Turn the page upside down!','答案：':'Answer: ','適合':'Suitable for','專屬我哋一家嘅每日新聞':'Daily news just for our family','我哋屋企日報':'Our Family Daily','喺左邊填啲內容，報紙就會出現喺度。':'Fill in the form and your newspaper will appear here.'};
+function tr(s){return D[s]||s}
+function ui(s){return L==='en'?tr(s):s}
+function pt(s){var e=tr(s);return S.lang==='en'?e:S.lang==='bi'&&e!==s?s+' '+e:s}
+function apply(){document.documentElement.lang=L==='en'?'en':'zh-HK';
+var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n,p,k;
+while(n=w.nextNode()){p=n.parentNode;if(!p||/^(SCRIPT|STYLE)$/.test(p.tagName)||(p.closest&&p.closest('#paper,#stat')))continue;
+if(n.__zh===undefined){k=n.nodeValue.trim();if(!k||!D[k])continue;n.__zh=n.nodeValue}
+k=n.__zh.trim();n.nodeValue=L==='en'?n.__zh.replace(k,function(){return D[k]}):n.__zh}
+document.querySelectorAll('[placeholder]').forEach(function(e){if(e.__ph===undefined)e.__ph=e.placeholder;e.placeholder=L==='en'?(D[e.__ph]||e.__ph):e.__ph});
+document.getElementById('ui').textContent=L==='en'?'繁體中文':'English'}
+document.getElementById('ui').onclick=function(){var o=S;save();L=L==='en'?'zh':'en';try{localStorage.setItem('fnp-ui',L)}catch(e){}
+var n=null;try{n=JSON.parse(localStorage.getItem('fnp-s-'+L))}catch(e){}
+if(!n||!n.on)n=sam();['tpl','age','topics','lvl','date'].forEach(function(k){n[k]=o[k]});S=n;fixLang();sync();status('');apply();chips();render()};
+var LIBE={story:[['The Firefly’s Tiny Light','A little firefly thought her light was too small, like a faraway star.\n\nOne night a tiny snail lost his way. The firefly’s small glow showed him the path home, one step at a time. She learned that a little light is enough if it helps someone.','Have you ever helped someone in a small way?'],['The Dragon Who Sneezed Fire','Every time Ember the dragon sneezed, flames shot out, and his friends kept their distance.\n\nOne freezing night, the cave had no fire. Ember sneezed three big sneezes and the whole cave glowed warm. Sometimes the thing we dislike about ourselves is our superpower.','What is something about you that seems odd but is actually great?']],
+joke:[['Why did the teacher wear sunglasses to class?','Because her students were so bright!'],['What has hands but cannot clap?','A clock!'],['Why was the math book sad?','It had too many problems!']],
+iq:[['What comes next? 2, 4, 8, 16, …','32 (each number doubles)'],['Mia has 3 sisters, and each sister has one brother. How many children are in the family?','4 (three sisters and one shared brother)'],['A dad is 40, four times his son’s age. In how many years will he be three times as old as his son?','5 years (the son will be 15 and the dad 45)']]};
+function fixLang(){if(L==='en')S.lang='en';else if(!S.lang||S.lang==='en'||S.lang==='bi')S.lang='yue';
+var s=document.getElementById('lang'),h=L==='en';
+s.innerHTML=h?'<option value="en">English</option>':'<option value="yue">廣東話口語</option><option value="zh">書面中文</option>';
+s.style.display=document.querySelector('label[for=lang]').style.display=(h||!USE_AI)?'none':''}
+var USE_AI=false,FBM='';
+var TC={a:'動物',s:'太空科學',f:'奇幻冒險',d:'恐龍',p:'運動',e:'美食',n:'大自然',h:'家庭生活',t:'科技',r:'友誼'},TCR={};for(var k in TC)TCR[TC[k]]=k;
+var LB={zh:{story:[
+'a|a|小鴨過河|小鴨要過河。呱呱，不敢過。媽媽說：「別怕，我陪你。」小鴨游呀游，呱呱，過河啦！|你做過什麼一開始很害怕的事？',
+'a|n|小雨點旅行|小雨點從天上跳下來。咚，落在葉子上。滑呀滑，掉進小溪裡。小溪流呀流，一起去看大海。|小雨點最後會到哪裡？',
+'a|e|會跳舞的麵包|麵包出爐啦，香噴噴！小熊聞到了，手舞足蹈。小兔也來了，扭呀扭。大家一起分麵包，真好吃！|你最喜歡什麼麵包？',
+'a|h|晚安月亮|天黑了，月亮出來了。小明刷牙，說晚安。小明穿睡衣，說晚安。月亮笑一笑：晚安，小明。|睡覺前，你會跟誰說晚安？',
+'a|r|分享的蠟筆|小玲只有一支紅蠟筆，小傑只有一支藍蠟筆。他們輪流用，一起畫出一道紅藍彩虹。|你和朋友分享過什麼？',
+'b|d|膽小的小恐龍|小恐龍阿龍最怕黑，每晚都睡不著。有一晚，山洞外傳來沙沙聲，原來是迷路的小烏龜。阿龍鼓起勇氣，提著螢火蟲燈，帶烏龜回家。回程時他發現，黑夜裡有好多星星，一點也不可怕。從那天起，阿龍成了森林裡的夜間小嚮導。|你怕什麼？怎樣才能不那麼怕？',
+'b|s|月球上的第一杯茶|太空人小宇到月球工作，很想念媽媽泡的茶。他把水倒出來，卻發現水在低重力下變成一顆顆小水球，飄在空中。小宇用杯子一顆顆接住，笑著喝下第一口「月球茶」。他寫信回地球：這杯茶特別甜，因為有家的味道。|如果你去太空，最想念家裡的什麼？',
+'b|t|修理機器人小布|機器人小布什麼都會修，卻從沒說過謝謝。有一天，小女孩謝謝他修好了玩具。小布的燈閃了閃，不明白這是什麼感覺。他學著說：「不客氣。」發現自己的小齒輪轉得更快了。原來被人感謝，連機器人也會心裡暖暖的。|別人謝謝你的時候，你有什麼感覺？',
+'b|p|最後一名的比賽|運動會上，小安跑得最慢，其他人早已到了終點。她喘著氣，仍然一步一步向前跑。同學們在終點線旁大喊：「加油！」她衝過線時，掌聲比第一名還響。小安明白了，堅持跑完，也是一種勝利。|你有沒有想放棄卻堅持下去的時候？',
+'b|r|兩隻刺蝟的擁抱|冬天到了，兩隻刺蝟想抱在一起取暖，卻被對方的刺扎到。他們試了很多次，終於找到不太近也不太遠的距離，既暖和又不會痛。朋友之間也一樣，要找到彼此都舒服的距離。|你和朋友怎樣相處才舒服？'],
+joke:[
+'a|n|什麼東西越洗越髒？|水！',
+'a|p|什麼門永遠關不上？|球門！',
+'a|e|什麼魚不會游泳？|烤魚！',
+'a|a|什麼雞沒有翅膀？|田雞！',
+'a|h|什麼東西有頭沒有腳？|枕頭！',
+'b|t|電腦為什麼很少感冒？|因為它有防毒軟件！',
+'b|h|媽媽問小明：你為什麼考零分？|小明：因為老師說零是最圓滿的數字！',
+'b|a|為什麼小鳥要飛到南方過冬？|因為走路太遠了！',
+'b|s|太空人最喜歡什麼樣的房子？|有很多「空間」的！',
+'b|e|為什麼雞蛋不愛聽笑話？|因為怕笑得裂開！'],
+iq:[
+'a|a|🐶🐶🐱🐶🐱，一共有幾隻🐶？|3隻',
+'a|n|🌸🌼🌸🌼🌸，下一朵是什麼花？|🌼（兩種花輪流出現）',
+'a|e|🍎🍎🍎，吃掉1個，還剩幾個🍎？|2個',
+'a|s|🌙⭐⭐🌙⭐⭐🌙，下一個是什麼？|⭐（一個月亮、兩顆星，一直重複）',
+'a|h|家裡有3個人，每人吃1個🍎，要準備幾個🍎？|3個',
+'b|s|找規律：2、4、8、16，下一個是什麼？|32（每次乘2）',
+'b|h|小美有3個姐姐，每個姐姐都有1個弟弟。一共有幾個孩子？|4個（3個姐姐加同一個弟弟）',
+'b|n|荷花每天長大一倍，30天長滿池塘。第幾天長滿半個池塘？|第29天（再長一倍就滿了）',
+'b|a|農場有雞和兔，共8個頭、22隻腳，有幾隻雞？|5隻雞、3隻兔',
+'b|t|用1、2、3排出三位數，第一位不是1，最後一位不是3，有哪幾個？|231、312、321']},
+en:{story:[
+'a|a|The Duckling and the River|A little duckling had to cross the river. Quack, quack, she was scared. Mama said, “I will swim with you.” The duckling paddled and paddled. Quack! She made it across!|What is something scary you did, and how did it go?',
+'a|n|The Little Raindrop|A little raindrop jumped from the sky. Plop! It landed on a leaf. It slid down into a stream. The stream flowed and flowed, all the way to the big blue sea.|Where do you think the raindrop goes next?',
+'a|e|The Dancing Bread|The bread came out of the oven, warm and yummy. Bear smelled it and danced. Bunny came and wiggled. They shared the bread together. Yum!|What is your favourite kind of bread?',
+'a|h|Goodnight, Moon|The sky grew dark. The moon came out. Sam brushed his teeth and said goodnight. Sam put on his pajamas and said goodnight. The moon smiled: goodnight, Sam.|Who do you say goodnight to?',
+'a|r|The Sharing Crayons|Lily had only a red crayon. Jay had only a blue crayon. They took turns, and together they drew a red and blue rainbow.|What have you shared with a friend?',
+'b|d|The Little Dinosaur Who Feared the Dark|Rex the little dinosaur was afraid of the dark, so he never slept well. One night he heard a rustling outside his cave. It was a lost baby turtle! Rex took a deep breath, lit a lantern full of fireflies, and led the turtle home. On the way back, he noticed the dark sky was full of twinkling stars, and it did not seem scary at all. From then on, Rex became the night guide of the forest.|What are you afraid of, and what could help?',
+'b|s|The First Cup of Tea on the Moon|Astronaut Yu missed the tea his mom made at home. On the Moon, he poured water from his flask, but in low gravity it turned into floating little balls. Yu caught them one by one in his cup and smiled as he took the first sip of “moon tea.” He wrote a message to Earth: this tea tastes extra sweet because it tastes like home.|If you went to space, what would you miss most about home?',
+'b|t|Bolt the Fixing Robot|Bolt the robot could fix anything but had never said thank you. One day a little girl thanked him for mending her toy. His light flickered. He did not know what the feeling was. He tried saying, “You’re welcome,” and his tiny gears spun faster. Even a robot can feel warm inside when someone says thanks.|How do you feel when someone thanks you?',
+'b|p|The Last-Place Race|At sports day, Ann ran the slowest, and everyone else had already crossed the finish line. Out of breath, she kept going, one step at a time. Her classmates cheered, “Go, Ann!” When she finally crossed the line, the clapping was louder than for the winner. Ann realised that finishing is its own kind of victory.|Have you ever kept going when you wanted to quit?',
+'b|r|Two Hedgehogs and a Hug|Winter came, and two hedgehogs wanted to snuggle for warmth, but their prickles poked each other. They tried again and again until they found a distance that was not too close or too far: warm, and no ouch. Friends are the same. We need to find a distance that feels good for both.|How do you and your friends find a comfortable way to play together?'],
+joke:[
+'a|n|What gets wetter the more it dries?|A towel!',
+'a|a|What has a head and a tail but no body?|A coin!',
+'a|e|Why did the cookie go to the doctor?|It felt crummy!',
+'a|d|What do you call a sleeping dinosaur?|A dino-snore!',
+'a|h|What is a cat’s favourite colour?|Purr-ple!',
+'b|t|Why was the computer cold?|It left its Windows open!',
+'b|h|Why did the teacher wear sunglasses?|Because her students were so bright!',
+'b|s|Why can’t you trust atoms?|They make up everything!',
+'b|p|Why did the football coach go to the bank?|To get his quarter-back!',
+'b|r|What did one wall say to the other?|I’ll meet you at the corner!'],
+iq:[
+'a|a|🐶🐶🐱🐶🐱 How many 🐶 are there?|3',
+'a|n|🌸🌼🌸🌼🌸 Which flower comes next?|🌼 (two flowers take turns)',
+'a|e|🍎🍎🍎 If you eat 1, how many 🍎 are left?|2',
+'a|s|🌙⭐⭐🌙⭐⭐🌙 What comes next?|⭐ (one moon, two stars, repeat)',
+'a|h|There are 3 people at home and each eats 1 🍎. How many 🍎 do we need?|3',
+'b|s|What comes next? 2, 4, 8, 16, …|32 (each number doubles)',
+'b|h|Mia has 3 sisters, and each sister has one brother. How many children are in the family?|4 (three sisters and one shared brother)',
+'b|n|A lily pad patch doubles in size every day and fills the pond on day 30. On which day is the pond half full?|Day 29 (one more doubling fills it)',
+'b|a|A farm has chickens and rabbits: 8 heads and 22 legs in total. How many chickens?|5 chickens and 3 rabbits',
+'b|t|Using 1, 2 and 3, make 3-digit numbers where the first digit is not 1 and the last is not 3. Which ones work?|231, 312, 321']}};
+function fb2(t){var lg=L==='en'?'en':'zh',B=LB[lg],ag=S.age||'b',tp=S.topics.map(function(x){return TCR[x]}),sn=seen(),nb=0,nt=0,ro=0,c,m=[];
+function pk(ty,pre){var all=B[ty].map(function(x,i){var p=x.split('|');p.id=pre+'-'+('0'+(i+1)).slice(-2);return p}),pool=all.filter(function(p){return p[0]===ag});
+if(!pool.length){pool=all.filter(function(p){return p[0]==='b'});nb=1}
+var mt=pool.filter(function(p){return !tp.length||tp.indexOf(p[1])>-1});if(!mt.length){mt=pool;nt=1}
+var s=sn[ty]||[],u=mt.filter(function(p){return s.indexOf(lg+p.id)<0});
+if(!u.length){u=mt;ro=1;try{var d=seen();d[ty]=(d[ty]||[]).filter(function(i){return !mt.some(function(p){return lg+p.id===i})});localStorage.setItem('fnp-seen2',JSON.stringify(d))}catch(e){}}
+var r=u[Math.floor(Math.random()*u.length)];mark(ty,lg+r.id);return r}
+if(t==='all'||t==='story'){c=pk('story','S');S.hl=c[2];S.story=c[3];S.think=c[4];S.sid=c.id}
+if(t==='all'||t==='joke'){c=pk('joke','J');S.joke=c[2];S.punch=c[3];S.jid=c.id}
+if(t==='all'||t==='iq'){c=pk('iq','Q');S.iq=c[2];S.ans=c[3];S.qid=c.id}
+if(nb)m.push(L==='en'?'Content for this age group is coming soon, so ages 7–10 items were used.':'呢個年齡組內容製作中，暫用 7–10 歲內容。');
+if(nt)m.push(L==='en'?'No item matches those topics yet, so one was picked at random.':'揀咗嘅主題暫時未有，已隨機揀一條。');
+if(ro)m.push(L==='en'?'You have seen every item in this set, so it starts over.':'呢個組合已經睇晒，由頭再來。');
+FBM=(L==='en'?'Picked from the built-in library.':'已由內置題庫抽出內容。')+' '+m.join(' ')}
+fixLang();
+chips();
+sync();render();apply();
+})();
+</script>
+</body>
+</html>
