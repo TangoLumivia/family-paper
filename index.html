@@ -458,8 +458,11 @@ var g=document.getElementById('fbgo');g.textContent=['試玩意見','Feedback'][
 function fbText(){var f=document.getElementById('fbf'),i=L==='en'?1:0,r=['Family Newspaper feedback ('+(L==='en'?'English':'Chinese')+' version)'];
 FQ.forEach(function(q,n){var id='q'+(n+1),v=[];f.querySelectorAll('[name='+id+']').forEach(function(e){if(q.y==='x'){if(e.value.trim())v.push(e.value.trim())}else if(e.checked)v.push(e.value)});r.push((n+1)+'. '+q.t[i]+'\n   '+(v.join(' / ')||'-'))});
 r.push('---','Age setting: '+(S.age||'b')+' | Topics: '+(S.topics.join(',')||'-')+' | Design: '+S.tpl+' | IDs: '+([S.sid,S.jid,S.qid].filter(Boolean).join('/')||'-'));return r.join('\n')}
+function fbData(){var f=document.getElementById('fbf'),d={time:new Date().toISOString(),ui:L};
+FQ.forEach(function(q,n){var id='q'+(n+1),v=[];f.querySelectorAll('[name='+id+']').forEach(function(e){if(q.y==='x'){if(e.value.trim())v.push(e.value.trim())}else if(e.checked)v.push(e.value)});d[id]=v.join(' / ')});
+d.age=S.age||'b';d.topics=S.topics.join(',');d.design=S.tpl;d.ids=[S.sid,S.jid,S.qid].filter(Boolean).join('/');return d}
 async function fbSend(){var o=document.getElementById('fbout'),i=L==='en'?1:0,t=fbText(),ok=false;
-if(FB_URL){try{var r=await fetch(FB_URL,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({message:t})});ok=r.ok}catch(e){}}
+if(FB_URL){try{await fetch(FB_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(fbData())});ok=true}catch(e){}}
 if(ok){o.innerHTML='<p class="fbok">'+['謝謝你的意見！','Thank you for your feedback!'][i]+'</p>';return}
 o.innerHTML='<p>'+['請按「複製」，再把內容傳給邀請你試玩的朋友。','Please press “Copy” and send the text to the friend who invited you.'][i]+'</p><textarea id="fbta" readonly style="min-height:200px"></textarea><div class="btns"><button type="button" id="fbcp">'+['複製','Copy'][i]+'</button>'+(FB_MAIL?'<a class="fbmail" href="mailto:'+FB_MAIL+'?subject='+encodeURIComponent('Family Newspaper feedback')+'&body='+encodeURIComponent(t)+'">'+['用電郵傳送','Send by email'][i]+'</a>':'')+'</div>';
 var ta=document.getElementById('fbta');ta.value=t;
