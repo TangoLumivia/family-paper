@@ -80,6 +80,13 @@ button.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);fo
 .corner .quote p{font-size:1rem}
 .rm li{padding-left:1.3em;position:relative}
 .cid{font-weight:400;font-size:.7rem;opacity:.6;letter-spacing:0}
+.fbwrap{width:calc(100% - 40px);max-width:1200px;margin:0 auto 40px}
+.fbwrap fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 12px;padding:8px 14px 10px;min-width:0}
+.fbwrap legend{font-weight:700;font-size:.95rem;padding:0 6px}
+.opt{display:inline-flex;align-items:center;gap:6px;margin:4px 14px 4px 0;color:var(--ink);font-size:.92rem}
+.fbwrap textarea{min-height:70px}
+.fbok{font-weight:700;color:var(--acc)}
+.fbmail{margin-left:8px;color:var(--acc)}
 .rm li::before{content:"";position:absolute;left:0;top:.5em;width:.75em;height:.75em;border:1.5px solid var(--r);border-radius:2px}
 select{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 select:focus{outline:2px solid var(--acc);outline-offset:1px}
@@ -135,7 +142,7 @@ body{background:#fff}
 </head>
 <body>
 <header class="top">
-<button type="button" id="ui" style="float:right" aria-label="Language / 語言"></button>
+<button type="button" id="ui" style="float:right" aria-label="Language / 語言"></button><button type="button" id="fbgo" style="float:right;margin-right:8px"></button>
 <h1>家庭日報產生器</h1>
 <p>每日一個故事、一個笑話、一條 IQ 題，印成一份孩子自己想睇嘅報紙。唔使安裝，唔使連接 Calendar，行程只係細細格。</p>
 </header>
@@ -217,6 +224,7 @@ body{background:#fff}
 </section>
 <section class="stage" aria-label="報紙預覽"><article class="paper classic" id="paper"></article></section>
 </main>
+<section class="panel fbwrap" id="fb"></section>
 <script>
 (function(){
 var TPL=[
@@ -336,7 +344,7 @@ document.querySelectorAll('[placeholder]').forEach(function(e){if(e.__ph===undef
 document.getElementById('ui').textContent=L==='en'?'繁體中文':'English'}
 document.getElementById('ui').onclick=function(){var o=S;save();L=L==='en'?'zh':'en';try{localStorage.setItem('fnp-ui',L)}catch(e){}
 var n=null;try{n=JSON.parse(localStorage.getItem('fnp-s-'+L))}catch(e){}
-if(!n||!n.on)n=sam();['tpl','age','topics','lvl','date'].forEach(function(k){n[k]=o[k]});S=n;fixLang();sync();status('');apply();chips();render()};
+if(!n||!n.on)n=sam();['tpl','age','topics','lvl','date'].forEach(function(k){n[k]=o[k]});S=n;fixLang();sync();status('');apply();chips();render();fbRender()};
 var LIBE={story:[['The Firefly’s Tiny Light','A little firefly thought her light was too small, like a faraway star.\n\nOne night a tiny snail lost his way. The firefly’s small glow showed him the path home, one step at a time. She learned that a little light is enough if it helps someone.','Have you ever helped someone in a small way?'],['The Dragon Who Sneezed Fire','Every time Ember the dragon sneezed, flames shot out, and his friends kept their distance.\n\nOne freezing night, the cave had no fire. Ember sneezed three big sneezes and the whole cave glowed warm. Sometimes the thing we dislike about ourselves is our superpower.','What is something about you that seems odd but is actually great?']],
 joke:[['Why did the teacher wear sunglasses to class?','Because her students were so bright!'],['What has hands but cannot clap?','A clock!'],['Why was the math book sad?','It had too many problems!']],
 iq:[['What comes next? 2, 4, 8, 16, …','32 (each number doubles)'],['Mia has 3 sisters, and each sister has one brother. How many children are in the family?','4 (three sisters and one shared brother)'],['A dad is 40, four times his son’s age. In how many years will he be three times as old as his son?','5 years (the son will be 15 and the dad 45)']]};
@@ -426,9 +434,39 @@ if(nb)m.push(L==='en'?'Content for this age group is coming soon, so ages 7–10
 if(nt)m.push(L==='en'?'No item matches those topics yet, so one was picked at random.':'揀咗嘅主題暫時未有，已隨機揀一條。');
 if(ro)m.push(L==='en'?'You have seen every item in this set, so it starts over.':'呢個組合已經睇晒，由頭再來。');
 FBM=(L==='en'?'Picked from the built-in library.':'已由內置題庫抽出內容。')+' '+m.join(' ')}
+var FB_URL='',FB_MAIL='';
+var FQ=[
+{t:['孩子的年齡段？','Child’s age group?'],y:'r',o:['4–6','7–10','11–14','15+']},
+{t:['你用什麼裝置打開？','What device are you using?'],y:'r',o:[['手機','平板','電腦'],['Phone','Tablet','Computer']]},
+{t:['上手容易嗎？（1 非常難，5 非常容易）','Was it easy to get started? (1 = very hard, 5 = very easy)'],y:'r',o:['1','2','3','4','5']},
+{t:['生成的內容適合孩子的年齡嗎？','Was the content right for your child’s age?'],y:'r',o:[['剛好','太簡單','太難','內容不適合'],['Just right','Too easy','Too hard','Not appropriate']]},
+{t:['你最喜歡哪些部分？（可多選）','Which parts did you like most? (select all that apply)'],y:'c',o:[['故事','笑話','IQ 題','今日小叮嚀','版面設計','家庭小站'],['Story','Joke','Brain teaser','Little Reminders','Page design','Family Corner']]},
+{t:['你會列印出來給孩子看嗎？','Would you print it for your child?'],y:'r',o:[['每天','偶爾','不會','不確定'],['Every day','Sometimes','No','Not sure']]},
+{t:['整體來說，你願意每天用它嗎？','Overall, would you use it every day?'],y:'r',o:[['願意','看內容而定','不願意'],['Yes','Depends on the content','No']]},
+{t:['使用時有沒有哪一步讓你困惑或卡住？','Was there any step that confused you or got you stuck?'],y:'x'},
+{t:['你最希望增加什麼主題或功能？','What topic or feature would you most like to see added?'],y:'x'},
+{t:['還有其他意見嗎？孩子看了有什麼反應？（選填）','Any other comments? How did your child react? (optional)'],y:'x'}];
+function fbRender(){var i=L==='en'?1:0,h='<h2>'+['試玩意見問卷（約 3 分鐘）','Feedback survey (about 3 minutes)'][i]+'</h2><p><b>'+['試玩任務：','Your mission: '][i]+'</b>'+['選孩子的年齡和 2 個主題，生成一份報紙，換一個設計，再用「列印／儲存 PDF」匯出，最好拿給孩子看，觀察他們願不願意讀。','Pick your child’s age and 2 topics, generate a newspaper, switch to another design, then export it with “Print / Save as PDF”. If you can, show it to your child and see whether they want to read it.'][i]+'</p><form id="fbf">';
+FQ.forEach(function(q,n){var id='q'+(n+1),b='',o=q.o?(Array.isArray(q.o[0])?q.o[i]:q.o):[];
+if(q.y==='x')b='<textarea name="'+id+'"></textarea>';
+else o.forEach(function(v){b+='<label class="opt"><input type="'+(q.y==='c'?'checkbox':'radio')+'" name="'+id+'" value="'+esc(v)+'"> '+esc(v)+'</label>'});
+h+='<fieldset><legend>'+(n+1)+'. '+q.t[i]+'</legend>'+b+'</fieldset>'});
+h+='<p class="note">'+['請勿填寫孩子的全名或其他私人資料。','Please do not include your child’s full name or other private details.'][i]+'</p><div class="btns"><button class="pri" type="submit">'+['送出意見','Send feedback'][i]+'</button></div></form><div id="fbout"></div>';
+document.getElementById('fb').innerHTML=h;
+document.getElementById('fbf').onsubmit=function(e){e.preventDefault();fbSend()};
+var g=document.getElementById('fbgo');g.textContent=['試玩意見','Feedback'][i];g.onclick=function(){document.getElementById('fb').scrollIntoView({behavior:'smooth'})}}
+function fbText(){var f=document.getElementById('fbf'),i=L==='en'?1:0,r=['Family Newspaper feedback ('+(L==='en'?'English':'Chinese')+' version)'];
+FQ.forEach(function(q,n){var id='q'+(n+1),v=[];f.querySelectorAll('[name='+id+']').forEach(function(e){if(q.y==='x'){if(e.value.trim())v.push(e.value.trim())}else if(e.checked)v.push(e.value)});r.push((n+1)+'. '+q.t[i]+'\n   '+(v.join(' / ')||'-'))});
+r.push('---','Age setting: '+(S.age||'b')+' | Topics: '+(S.topics.join(',')||'-')+' | Design: '+S.tpl+' | IDs: '+([S.sid,S.jid,S.qid].filter(Boolean).join('/')||'-'));return r.join('\n')}
+async function fbSend(){var o=document.getElementById('fbout'),i=L==='en'?1:0,t=fbText(),ok=false;
+if(FB_URL){try{var r=await fetch(FB_URL,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({message:t})});ok=r.ok}catch(e){}}
+if(ok){o.innerHTML='<p class="fbok">'+['謝謝你的意見！','Thank you for your feedback!'][i]+'</p>';return}
+o.innerHTML='<p>'+['請按「複製」，再把內容傳給邀請你試玩的朋友。','Please press “Copy” and send the text to the friend who invited you.'][i]+'</p><textarea id="fbta" readonly style="min-height:200px"></textarea><div class="btns"><button type="button" id="fbcp">'+['複製','Copy'][i]+'</button>'+(FB_MAIL?'<a class="fbmail" href="mailto:'+FB_MAIL+'?subject='+encodeURIComponent('Family Newspaper feedback')+'&body='+encodeURIComponent(t)+'">'+['用電郵傳送','Send by email'][i]+'</a>':'')+'</div>';
+var ta=document.getElementById('fbta');ta.value=t;
+document.getElementById('fbcp').onclick=function(){ta.select();try{navigator.clipboard.writeText(t)}catch(e){document.execCommand('copy')}}}
 fixLang();
 chips();
-sync();render();apply();
+sync();render();apply();fbRender();
 })();
 </script>
 </body>
